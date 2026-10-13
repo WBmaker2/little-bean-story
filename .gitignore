@@ -1,0 +1,4 @@
+# Dependencies
+node_modules/
+.playwright-mcp/
+*.log

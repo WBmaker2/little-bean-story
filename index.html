@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>강낭콩의 작은 이야기 - 식물 성장 체험</title>
+  <!-- Google Fonts: Gowun Batang (우아한 세리프/명조체), Nanum Myeongjo, Nanum Pen Script (예쁜 필기체) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:ital,wght@0,400;0,700;1,400&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 수채화 텍스처 및 번짐 필터 SVG Definitions -->
+  <svg class="svg-filters" aria-hidden="true">
+    <defs>
+      <!-- 종이 질감 필터 -->
+      <filter id="paper-texture" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
+        <feDiffuseLighting in="noise" lighting-color="#fff" surfaceScale="1.2" result="light">
+          <feDistantLight azimuth="60" elevation="50" />
+        </feDiffuseLighting>
+        <feBlend mode="multiply" in="SourceGraphic" in2="light" />
+      </filter>
+
+      <!-- 수채화 물감 번짐 효과 필터 -->
+      <filter id="watercolor-bleed">
+        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+        <feGaussianBlur in="displaced" stdDeviation="0.8" result="blurred" />
+        <feMerge>
+          <feMergeNode in="blurred" />
+          <feMergeNode in="SourceGraphic" opacity="0.65" />
+        </feMerge>
+      </filter>
+
+      <!-- 부드러운 물방울 번짐 필터 -->
+      <filter id="water-droplet-filter">
+        <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="turb" />
+        <feDisplacementMap in="SourceGraphic" in2="turb" scale="12" />
+        <feGaussianBlur stdDeviation="1.2" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- 거친 종이 질감 오버레이 배경 -->
+  <div class="paper-texture-overlay"></div>
+
+  <!-- 메인 컨테이너 -->
+  <div class="app-container">
+    <!-- 헤더 영역: 단계 표시기 및 상태 메시지 -->
+    <header class="app-header">
+      <div class="brand-title">
+        <span class="leaf-icon">🌱</span>
+        <span>강낭콩의 사계</span>
+      </div>
+      
+      <!-- 단계 인디케이터 바 -->
+      <nav class="step-progress-bar" aria-label="체험 단계">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="step-nodes">
+          <button class="step-node active" data-step="1" id="stepNode1">
+            <span class="step-num">1</span>
+            <span class="step-name">씨앗 심기</span>
+          </button>
+          <button class="step-node" data-step="2" id="stepNode2">
+            <span class="step-num">2</span>
+            <span class="step-name">물과 발아</span>
+          </button>
+          <button class="step-node" data-step="3" id="stepNode3">
+            <span class="step-num">3</span>
+            <span class="step-name">햇살과 줄기</span>
+          </button>
+          <button class="step-node" data-step="4" id="stepNode4">
+            <span class="step-num">4</span>
+            <span class="step-name">꽃과 일기</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- 감성적인 메시지 알림 배너 -->
+      <div class="status-banner" id="statusBanner" role="status" aria-live="polite">
+        <p class="status-message" id="statusMessage">
+          옆에 놓인 <em>강낭콩 씨앗</em>을 살포시 드래그해서 포근한 흙 속에 심어주세요.
+        </p>
+      </div>
+    </header>
+
+    <!-- 인터랙티브 체험 캔버스 영역 -->
+    <main class="interactive-stage" id="interactiveStage">
+      <!-- 배경 장식 (미세한 바람, 부유하는 꽃가루 파티클) -->
+      <div class="particles-container" id="particlesContainer"></div>
+
+      <!-- 상단 하늘 인터랙션 요소 (3단계 해님) -->
+      <div class="sky-elements" id="skyElements">
+        <div class="sun-wrapper" id="sunWrapper" style="display: none;" title="해님을 드래그하여 움직여보세요!">
+          <div class="sun-glow"></div>
+          <svg class="sun-svg" viewBox="0 0 100 100" width="86" height="86">
+            <circle cx="50" cy="50" r="28" fill="#F4B251" opacity="0.9" filter="url(#watercolor-bleed)" />
+            <circle cx="50" cy="50" r="22" fill="#FFE27A" opacity="0.95" />
+            <!-- 햇살 레이 -->
+            <g class="sun-rays" stroke="#E89B38" stroke-width="3" stroke-linecap="round">
+              <line x1="50" y1="12" x2="50" y2="2" />
+              <line x1="50" y1="88" x2="50" y2="98" />
+              <line x1="12" y1="50" x2="2" y2="50" />
+              <line x1="88" y1="50" x2="98" y2="50" />
+              <line x1="23" y1="23" x2="16" y2="16" />
+              <line x1="77" y1="77" x2="84" y2="84" />
+              <line x1="23" y1="77" x2="16" y2="84" />
+              <line x1="77" y1="23" x2="84" y2="16" />
+            </g>
+          </svg>
+          <div class="sun-handle-hint">햇살을 비춰줘요 ✨</div>
+        </div>
+      </div>
+
+      <!-- 1단계: 씨앗 바구니 / 트레이 -->
+      <div class="seed-shelf" id="seedShelf">
+        <div class="shelf-label">씨앗 보관함</div>
+        <div class="seed-item" id="draggableSeed" draggable="true" title="마우스로 드래그하여 화분 흙 위로 옮겨보세요!">
+          <svg class="seed-svg" viewBox="0 0 70 50" width="70" height="50">
+            <!-- 수채화 느낌의 강낭콩 형태 -->
+            <path d="M 12,24 C 10,12 26,6 46,10 C 62,14 66,28 60,38 C 52,48 26,46 16,38 C 10,34 14,30 12,24 Z"
+                  fill="#7A3E26" filter="url(#watercolor-bleed)" opacity="0.95" />
+            <path d="M 18,22 C 16,15 28,11 44,14 C 55,17 58,26 54,34 C 47,41 27,39 20,33 Z"
+                  fill="#9B4F31" opacity="0.9" />
+            <!-- 배꼽(제륜) 하얀 점 -->
+            <ellipse cx="33" cy="27" rx="5" ry="3" fill="#F8EBD9" transform="rotate(-15 33 27)" opacity="0.9" />
+          </svg>
+          <span class="seed-hint-pulse"></span>
+        </div>
+        <span class="shelf-sub">강낭콩 씨앗</span>
+      </div>
+
+      <!-- 정원 캔버스 (화분 및 식물) -->
+      <div class="garden-viewport" id="gardenViewport">
+        <!-- 4단계 나비 레이어 -->
+        <div class="butterflies-layer" id="butterfliesLayer"></div>
+
+        <!-- 식물 SVG 일러스트레이션 (줄기, 잎, 꽃, 꼬투리) -->
+        <svg class="plant-svg-canvas" id="plantSvg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMax meet">
+          <!-- 2단계: 흙 속 잠든 씨앗 (심긴 후 흙 속에서 투영) -->
+          <g id="plantedSeedGroup" class="planted-seed-group" style="opacity: 0;">
+            <path d="M 185,415 C 183,405 197,400 213,403 C 226,406 229,417 224,425 C 218,433 197,431 189,425 Z"
+                  fill="#6D3720" filter="url(#watercolor-bleed)" />
+            <ellipse cx="203" cy="417" rx="4" ry="2.5" fill="#E8D5BF" opacity="0.8" />
+          </g>
+
+          <!-- 2단계: 첫 새싹 (Cotyledon / Sprout) -->
+          <g id="sproutGroup" class="sprout-group" style="opacity: 0;">
+            <!-- 어린 줄기 -->
+            <path id="sproutStem" d="M 200,410 Q 198,380 200,355" fill="none" stroke="#7CB342" stroke-width="5" stroke-linecap="round" />
+            <!-- 왼쪽 연두 떡잎 -->
+            <path d="M 200,355 C 180,352 165,365 175,378 C 185,388 198,365 200,355 Z" fill="#9CCC65" filter="url(#watercolor-bleed)" opacity="0.95" />
+            <!-- 오른쪽 연두 떡잎 -->
+            <path d="M 200,355 C 220,352 235,365 225,378 C 215,388 202,365 200,355 Z" fill="#AED581" filter="url(#watercolor-bleed)" opacity="0.95" />
+            <!-- 중앙 작은 새 순 -->
+            <path d="M 200,355 Q 200,338 202,332 Q 204,338 200,355" fill="#8BC34A" stroke="#689F38" stroke-width="1.5" />
+          </g>
+
+          <!-- 3단계 & 4단계: 본 줄기 및 가지 시스템 -->
+          <g id="mainPlantSystem" class="main-plant-system" style="opacity: 0;">
+            <!-- 소프트 민트빛 물길 (빛나는 수액 흐름) -->
+            <path id="waterSapStream" d="M 200,410 Q 200,280 200,150" fill="none" stroke="#C9E0C0" stroke-width="4" stroke-linecap="round" opacity="0.8" stroke-dasharray="8 6" />
+            
+            <!-- 주 줄기 (수채화 번짐 필터 적용) -->
+            <path id="mainStem" d="M 200,410 Q 200,280 200,150" fill="none" stroke="#558B2F" stroke-width="9" stroke-linecap="round" filter="url(#watercolor-bleed)" />
+            <path id="mainStemHighlight" d="M 200,410 Q 200,280 200,150" fill="none" stroke="#8BC34A" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+
+            <!-- 잎사귀 그룹들 (동적으로 생성되거나 제어됨) -->
+            <g id="leavesCluster"></g>
+
+            <!-- 4단계: 강낭콩 꽃송이 그룹 -->
+            <g id="flowersCluster" style="opacity: 0;"></g>
+
+            <!-- 4단계: 콩 꼬투리 그룹 -->
+            <g id="podsCluster" style="opacity: 0;"></g>
+          </g>
+        </svg>
+
+        <!-- 화분 및 따뜻한 흙 영역 (Drop Zone) -->
+        <div class="pot-and-soil-container" id="soilDropZone">
+          <!-- 흙 영역 (드롭 대상) -->
+          <div class="soil-mound" id="soilMound">
+            <div class="soil-surface-texture"></div>
+            <div class="soil-highlight"></div>
+            <div class="soil-drop-indicator" id="soilDropIndicator">
+              <span>이곳에 씨앗을 묻어주세요 🌾</span>
+            </div>
+          </div>
+          <!-- 수채화 풍의 화분 베이스 -->
+          <div class="ceramic-pot">
+            <div class="pot-rim"></div>
+            <div class="pot-body">
+              <div class="pot-pattern">✿ LITTLE BEAN ✿</div>
+            </div>
+            <div class="pot-shadow"></div>
+          </div>
+        </div>
+
+        <!-- 물주기 애니메이션 이펙트 컨테이너 -->
+        <div class="watering-effects-layer" id="wateringEffects"></div>
+      </div>
+
+      <!-- 플로팅 컨트롤 패널 (단계별 전용 버튼) -->
+      <aside class="stage-control-panel">
+        <!-- 2단계: 물주기 컨트롤 -->
+        <div class="control-box step2-control" id="step2Control" style="display: none;">
+          <button class="action-btn water-btn" id="waterBtn">
+            <span class="btn-icon">💧</span>
+            <span class="btn-label">물 주기</span>
+            <span class="click-counter-badge" id="waterCounter">0 / 3</span>
+          </button>
+          <div class="action-caption">물방울을 주어 씨앗을 깨워주세요</div>
+        </div>
+
+        <!-- 3단계: 햇살 인터랙션 가이드 팁 -->
+        <div class="control-box step3-control" id="step3Control" style="display: none;">
+          <div class="sun-slider-guide">
+            <span class="icon">☀️</span>
+            <div class="guide-text">
+              <strong>햇살 따라 줄기 키우기</strong>
+              <p>상단의 해님을 마우스로 잡고 좌우나 위로 움직여보세요!</p>
+            </div>
+          </div>
+          <!-- 보조 슬라이더 (모바일 및 키보드 접근성 대응) -->
+          <div class="sun-accessible-controls">
+            <label for="sunPosSlider" class="a11y-label">해님 위치 조절</label>
+            <input type="range" id="sunPosSlider" min="15" max="85" value="50" class="sun-range" />
+            <button class="sub-btn" id="growMoreBtn">줄기 더 쑥쑥 키우기 🌱</button>
+          </div>
+        </div>
+
+        <!-- 4단계: 일기 쓰기 완료 후 다시 키우기 리셋 버튼 -->
+        <div class="control-box step4-reset" id="step4Reset" style="display: none;">
+          <button class="action-btn reset-btn" id="restartBtn">
+            <span class="btn-icon">🔄</span>
+            <span class="btn-label">처음부터 다시 키우기</span>
+          </button>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 4단계: 오늘의 정원 일기 모달 & 기록지 영역 -->
+    <section class="diary-section" id="diarySection" style="display: none;">
+      <div class="diary-container">
+        <!-- 일기 작성 카드 -->
+        <div class="diary-card input-card" id="diaryInputCard">
+          <div class="diary-header">
+            <span class="feather-pen">✒️</span>
+            <h3>오늘의 정원 일기</h3>
+          </div>
+          <p class="diary-desc">작은 씨앗이 자라 예쁜 꽃과 열매를 맺었어요. 오늘 느낀 마음을 일기로 남겨보세요.</p>
+          <form id="diaryForm" class="diary-form">
+            <div class="form-group">
+              <input type="text" id="diaryAuthor" class="diary-input-name" placeholder="나의 이름 / 원예사" maxlength="20" required />
+            </div>
+            <div class="form-group">
+              <textarea id="diaryContent" class="diary-textarea" placeholder="흙의 따뜻한 온기와 초록 잎사귀, 햇살의 축복을 기록해보세요..." rows="3" required></textarea>
+            </div>
+            <button type="submit" class="action-btn submit-diary-btn">
+              <span>기록 남기기 🌿</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- 기록된 일기장 디스플레이 (수채화 편지지 스타일) -->
+        <div class="diary-card paper-parchment" id="diaryParchmentCard" style="display: none;">
+          <div class="parchment-stamp">🌱 관찰일지</div>
+          <div class="parchment-date" id="parchmentDate">2026년 가을의 어느 날</div>
+          <div class="parchment-body">
+            <p class="parchment-text" id="parchmentContent"></p>
+          </div>
+          <div class="parchment-footer">
+            <span class="parchment-gardener">기록한 작은 정원사:</span>
+            <strong class="parchment-name" id="parchmentAuthor"></strong>
+          </div>
+          <div class="parchment-decorations">
+            <span class="dec-flower">🌸</span>
+            <span class="dec-leaf">🍃</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
